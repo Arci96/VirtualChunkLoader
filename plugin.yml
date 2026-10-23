@@ -1,0 +1,35 @@
+name: VirtualChunkLoader
+version: '${project.version}'
+main: dev.virtualchunkloader.VirtualChunkLoaderPlugin
+api-version: '1.21'
+description: Chunkloading und Farm-Diagnose ohne echte Spieler
+author: VirtualChunkLoader
+load: POSTWORLD
+
+commands:
+  vcl:
+    description: Verwaltet VirtualChunkLoader-Chunkloader
+    usage: /<command> help
+    aliases: [virtualchunkloader]
+
+permissions:
+  virtualchunkloader.admin:
+    description: Voller Zugriff (enthält alle anderen Rechte, plus enable/disable/schedule/radius)
+    default: op
+    children:
+      virtualchunkloader.create: true
+      virtualchunkloader.remove: true
+      virtualchunkloader.list: true
+      virtualchunkloader.reload: true
+  virtualchunkloader.create:
+    description: Chunkloader erstellen (/vcl create)
+    default: false
+  virtualchunkloader.remove:
+    description: Chunkloader entfernen (/vcl remove)
+    default: false
+  virtualchunkloader.list:
+    description: Lesender Zugriff (/vcl list, info, status, farm, types)
+    default: false
+  virtualchunkloader.reload:
+    description: Konfiguration neu laden (/vcl reload)
+    default: false

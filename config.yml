@@ -1,0 +1,55 @@
+# ============================================================
+#  VirtualChunkLoader – Konfiguration
+#  Änderungen mit /vcl reload übernehmen.
+# ============================================================
+
+# Ressourcenbegrenzungen (Schutz vor versehentlich zu vielen Chunks)
+limits:
+  # Maximale Anzahl Chunkloader
+  max-loaders: 5
+  # Maximale Chunks pro Chunkloader. Radius r ergibt (2r+1)^2 Chunks: r=2 -> 25
+  max-chunks-per-loader: 25
+  # Maximale Anzahl gleichzeitig gehaltener (eindeutiger) Chunks insgesamt
+  max-total-chunks: 100
+  # Standardradius in Chunks für /vcl create
+  default-radius: 2
+
+# Wiederherstellung beim Serverstart
+restore:
+  # true  = gespeicherte Chunkloader werden beim Start sofort wieder aktiviert
+  # false = sie werden nur geladen, aber erst mit /vcl enable aktiv
+  on-startup: true
+
+# Speicherung (Datei im Plugin-Ordner, wird asynchron geschrieben)
+storage:
+  file: loaders.yml
+
+# Zeitplan: Intervall der Prüfung, ob zeitgesteuerte Loader aktiv sein sollen.
+# Der Task läuft nur, wenn mindestens ein Loader einen Zeitplan hat.
+schedule:
+  check-interval-seconds: 30
+
+# Virtuelle Spielersimulation
+virtual-player:
+  # TICKET_ONLY = der "virtuelle Spieler" ist ein logisches Objekt, das Plugin-Chunk-Tickets hält.
+  # Es existiert KEIN Spieler-Entity (siehe README, Abschnitt "Grenzen").
+  mode: TICKET_ONLY
+  # Namensmuster des virtuellen Spielers; %name% = Name des Chunkloaders
+  name-format: "FarmLoader_%name%"
+
+# Farmdiagnose (/vcl farm <name> <typ>)
+diagnostics:
+  enabled: true
+  # Mindestanzahl Dorfbewohner (mit Schlaf in den letzten 24000 Ticks) im 10-Block-Umkreis
+  golem-min-villagers: 5
+  # Maximal gescannte Dorfbewohner pro Diagnose
+  max-villagers-scanned: 200
+  # Spawnfläche für Eisengolems prüfen (liest bis zu ~3800 Blöcke, nur bereits geladene Chunks)
+  spawn-area-scan: true
+
+# Debug-Ausgaben in der Konsole
+debug: false
+
+# Protokollierung
+logging:
+  log-ticket-changes: true

@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+# Nur das Nötigste: Schreibrecht ausschließlich zum Erstellen des Releases
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Quellcode auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prüfen, dass der Tag auf dem Hauptbranch liegt
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Der Tag $GITHUB_REF_NAME liegt nicht auf dem Branch main. Release abgebrochen."
+            exit 1
+          fi
+
+      - name: Java 21 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Tag mit pom.xml-Version abgleichen
+        run: |
+          POM_VERSION=$(mvn -B -ntp -q -DforceStdout help:evaluate -Dexpression=project.version)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$POM_VERSION" != "$TAG_VERSION" ]; then
+            echo "Tag ($TAG_VERSION) passt nicht zur pom.xml-Version ($POM_VERSION). Release abgebrochen."
+            exit 1
+          fi
+          echo "VERSION=$TAG_VERSION" >> "$GITHUB_ENV"
+
+      - name: Kompilieren, testen und JAR bauen
+        run: mvn -B -ntp verify
+
+      - name: Release-Text erstellen
+        run: |
+          {
+            echo "## VirtualChunkLoader ${VERSION}"
+            echo
+            echo "### Änderungen"
+            CHANGES=$(awk -v v="$VERSION" 'index($0, "## [" v "]") == 1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md)
+            if [ -n "$CHANGES" ]; then echo "$CHANGES"; else echo "Siehe CHANGELOG.md."; fi
+            echo
+            echo "### Installation"
+            echo "1. \`VirtualChunkLoader-${VERSION}.jar\` unten herunterladen."
+            echo "2. Die Datei in den Ordner \`plugins\` deines Paper-Servers (Minecraft 1.21.11, Java 21) legen."
+            echo "3. Server neu starten."
+            echo "4. Im Spiel oder in der Konsole \`/vcl status\` ausführen."
+            echo "5. Wichtig für Farmen ohne Spieler: in \`server.properties\` \`pause-when-empty-seconds=-1\` setzen (Neustart)."
+          } > release-notes.md
+
+      - name: GitHub-Release erstellen
+        uses: softprops/action-gh-release@v2
+        with:
+          name: VirtualChunkLoader ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: target/VirtualChunkLoader-${{ env.VERSION }}.jar
+          fail_on_unmatched_files: true
